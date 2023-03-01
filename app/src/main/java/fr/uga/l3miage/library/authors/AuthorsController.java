@@ -6,6 +6,7 @@ import fr.uga.l3miage.library.books.BookDTO;
 import fr.uga.l3miage.library.books.BooksMapper;
 import fr.uga.l3miage.library.service.AuthorService;
 import fr.uga.l3miage.library.service.BookService;
+import fr.uga.l3miage.library.service.DeleteAuthorException;
 import fr.uga.l3miage.library.service.EntityNotFoundException;
 import jakarta.validation.Valid;
 
@@ -92,7 +93,9 @@ public class AuthorsController {
     public void deleteAuthor(@PathVariable("id") Long id) {
         try{
             authorService.delete(id);
-        }catch(Exception e) {
+        }catch(DeleteAuthorException e){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "cannot delete author, one or several books are co-authored");
+        }catch(EntityNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The author doesn't exist");
         }
     }
@@ -124,6 +127,5 @@ public class AuthorsController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The author was not found");
         }
     }
-
 
 }

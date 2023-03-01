@@ -1,10 +1,9 @@
 package fr.uga.l3miage.library.books;
 
 import fr.uga.l3miage.library.authors.AuthorDTO;
-import jakarta.persistence.Enumerated;
+import io.micrometer.common.lang.Nullable;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -26,9 +25,10 @@ public record BookDTO(
         @NotNull @Min(-9999) @Max(9999) 
         short year,
 
-        @NotEmpty @Pattern(regexp="^(english|french)", message = "wrong language")
+        @Pattern(regexp="^(english|french)", message = "wrong language")
         String language,
 
+        @Nullable
         Collection<AuthorDTO> authors
 ) {
 }
