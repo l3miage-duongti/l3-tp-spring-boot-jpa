@@ -13,7 +13,6 @@ import java.util.Collection;
 
 public record BookDTO(
         Long id,
-
         @NotEmpty(message = "title cannot be empty")
         String title,
 

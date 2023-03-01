@@ -3,11 +3,17 @@ package fr.uga.l3miage.library.books;
 import fr.uga.l3miage.data.domain.Book;
 import fr.uga.l3miage.library.authors.AuthorDTO;
 import fr.uga.l3miage.library.service.BookService;
+import fr.uga.l3miage.library.service.EntityNotFoundException;
+import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -58,14 +64,25 @@ public class BooksController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The author of the book doesn't exist");
         }
     }
-
-    public BookDTO updateBook(Long authorId, BookDTO book) {
+    @PutMapping("/books/{id}")
+    public BookDTO updateBook(@PathVariable("id") Long authorId, @RequestBody @Valid  BookDTO book)throws EntityNotFoundException {
         // attention BookDTO.id() doit être égale à id, sinon la requête utilisateur est mauvaise
-        return null;
+        if(book.id() != authorId){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"The book was not found");
+        }
+        Book bookup = booksMapper.dtoToEntity(book);
+        Book updated = bookService.update(bookup);
+        return booksMapper.entityToDTO(updated);
     }
+    @DeleteMapping("/books/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteBook(@PathVariable("id") Long id) {
+        try{
+            bookService.delete(id);
 
-    public void deleteBook(Long id) {
-
+        }catch(Exception e){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The book was not found");
+        }
     }
 
     public void addAuthor(Long authorId, AuthorDTO author) {
