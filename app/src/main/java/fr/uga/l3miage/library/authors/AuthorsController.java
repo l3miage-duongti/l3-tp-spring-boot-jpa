@@ -4,11 +4,23 @@ import fr.uga.l3miage.data.domain.Author;
 import fr.uga.l3miage.library.books.BookDTO;
 import fr.uga.l3miage.library.books.BooksMapper;
 import fr.uga.l3miage.library.service.AuthorService;
+import fr.uga.l3miage.library.service.EntityNotFoundException;
+import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -40,18 +52,38 @@ public class AuthorsController {
                 .map(authorMapper::entityToDTO)
                 .toList();
     }
-
-    public AuthorDTO author(Long id) {
-        return null;
+    
+    @GetMapping("/authors/{id}")
+    public AuthorDTO author(@PathVariable("id") Long id) {
+        try {
+            Author auteur = authorService.get(id);
+            return authorMapper.entityToDTO(auteur);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The author was not found");
+        }
     }
 
-    public AuthorDTO newAuthor(AuthorDTO author) {
-        return null;
+    @PostMapping("/authors")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AuthorDTO newAuthor(@RequestBody @Valid AuthorDTO author) {
+        Author auteur = authorMapper.dtoToEntity(author);
+        Author newAuthor = authorService.save(auteur);
+        return authorMapper.entityToDTO(newAuthor);
     }
+    @PutMapping("/authors/{id}")
+    public AuthorDTO updateAuthor(@PathVariable("id") @Valid AuthorDTO author, Long id) throws EntityNotFoundException {
 
-    public AuthorDTO updateAuthor(AuthorDTO author, Long id) {
+        if(author.id() != id ){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"The author was not found");
+        }
+        Author auteur = authorMapper.dtoToEntity(author);
+        auteur = authorService.get(id);
+        auteur.setFullName(auteur.getFullName());
+        auteur.setBooks(auteur.getBooks());
         // attention AuthorDTO.id() doit être égale à id, sinon la requête utilisateur est mauvaise
-        return null;
+
+        authorService.update(auteur);
+        return updateAuthor(author, id);
     }
 
     public void deleteAuthor(Long id) {
