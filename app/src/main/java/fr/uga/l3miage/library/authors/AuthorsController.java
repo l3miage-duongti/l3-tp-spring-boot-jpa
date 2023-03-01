@@ -71,19 +71,14 @@ public class AuthorsController {
         return authorMapper.entityToDTO(newAuthor);
     }
     @PutMapping("/authors/{id}")
-    public AuthorDTO updateAuthor(@PathVariable("id") @Valid AuthorDTO author, Long id) throws EntityNotFoundException {
-
-        if(author.id() != id ){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"The author was not found");
-        }
-        Author auteur = authorMapper.dtoToEntity(author);
-        auteur = authorService.get(id);
-        auteur.setFullName(auteur.getFullName());
-        auteur.setBooks(auteur.getBooks());
+    public AuthorDTO updateAuthor(@PathVariable("id") Long id, @RequestBody @Valid AuthorDTO author) throws EntityNotFoundException {
         // attention AuthorDTO.id() doit être égale à id, sinon la requête utilisateur est mauvaise
-
-        authorService.update(auteur);
-        return updateAuthor(author, id);
+        if(author.id() != id) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"The author was not found");
+        } 
+        Author auteur = authorMapper.dtoToEntity(author);
+        Author updated = authorService.update(auteur);
+        return authorMapper.entityToDTO(updated);
     }
 
     public void deleteAuthor(Long id) {
