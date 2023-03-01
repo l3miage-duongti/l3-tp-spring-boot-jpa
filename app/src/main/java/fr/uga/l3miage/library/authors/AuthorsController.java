@@ -1,9 +1,11 @@
 package fr.uga.l3miage.library.authors;
 
 import fr.uga.l3miage.data.domain.Author;
+import fr.uga.l3miage.data.domain.Book;
 import fr.uga.l3miage.library.books.BookDTO;
 import fr.uga.l3miage.library.books.BooksMapper;
 import fr.uga.l3miage.library.service.AuthorService;
+import fr.uga.l3miage.library.service.BookService;
 import fr.uga.l3miage.library.service.EntityNotFoundException;
 import jakarta.validation.Valid;
 
@@ -33,12 +35,14 @@ public class AuthorsController {
     private final AuthorService authorService;
     private final AuthorMapper authorMapper;
     private final BooksMapper booksMapper;
+    private final BookService bookService;
 
     @Autowired
-    public AuthorsController(AuthorService authorService, AuthorMapper authorMapper, BooksMapper booksMapper) {
+    public AuthorsController(AuthorService authorService, AuthorMapper authorMapper, BooksMapper booksMapper, BookService bookService) {
         this.authorService = authorService;
         this.authorMapper = authorMapper;
         this.booksMapper = booksMapper;
+        this.bookService = bookService;
     }
 
     @GetMapping("/authors")
@@ -71,6 +75,7 @@ public class AuthorsController {
         Author newAuthor = authorService.save(auteur);
         return authorMapper.entityToDTO(newAuthor);
     }
+    
     @PutMapping("/authors/{id}")
     public AuthorDTO updateAuthor(@PathVariable("id") Long id, @RequestBody @Valid AuthorDTO author) throws EntityNotFoundException {
         // attention AuthorDTO.id() doit être égale à id, sinon la requête utilisateur est mauvaise
@@ -92,8 +97,33 @@ public class AuthorsController {
         }
     }
 
-    public Collection<BookDTO> books(Long authorId) {
-        return Collections.emptyList();
+    //return all books of an author
+    @GetMapping("/authors/{id}/books")
+    public Collection<BookDTO> books(@PathVariable("id") Long authorId) {
+        try{
+            Collection<Book> books = bookService.getByAuthor(authorId);
+            return books.stream()
+                        .map(booksMapper::entityToDTO)
+                        .toList();
+        }
+        catch(Exception e){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The author was not found");
+        }
     }
+
+    //create a new book for an author
+    @PostMapping("/authors/{id}/books")
+    @ResponseStatus(HttpStatus.CREATED)
+    public BookDTO newBook(@PathVariable("id") Long authorId, @RequestBody @Valid BookDTO bookDTO) {
+        Book book = booksMapper.dtoToEntity(bookDTO);
+        try {
+            Book saved = bookService.save(authorId, book);
+            return booksMapper.entityToDTO(saved);
+        }
+        catch (Exception e){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The author was not found");
+        }
+    }
+
 
 }
