@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -71,23 +72,24 @@ public class AuthorsController {
         return authorMapper.entityToDTO(newAuthor);
     }
     @PutMapping("/authors/{id}")
-    public AuthorDTO updateAuthor(@PathVariable("id") @Valid AuthorDTO author, Long id) throws EntityNotFoundException {
-
-        if(author.id() != id ){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"The author was not found");
-        }
-        Author auteur = authorMapper.dtoToEntity(author);
-        auteur = authorService.get(id);
-        auteur.setFullName(auteur.getFullName());
-        auteur.setBooks(auteur.getBooks());
+    public AuthorDTO updateAuthor(@PathVariable("id") Long id, @RequestBody @Valid AuthorDTO author) throws EntityNotFoundException {
         // attention AuthorDTO.id() doit être égale à id, sinon la requête utilisateur est mauvaise
-
-        authorService.update(auteur);
-        return updateAuthor(author, id);
+        if(author.id() != id) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"The author was not found");
+        } 
+        Author auteur = authorMapper.dtoToEntity(author);
+        Author updated = authorService.update(auteur);
+        return authorMapper.entityToDTO(updated);
     }
 
-    public void deleteAuthor(Long id) {
-        // unimplemented... yet!
+    @DeleteMapping("/authors/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)  //code HTTP 204
+    public void deleteAuthor(@PathVariable("id") Long id) {
+        try{
+            authorService.delete(id);
+        }catch(Exception e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The author doesn't exist");
+        }
     }
 
     public Collection<BookDTO> books(Long authorId) {
